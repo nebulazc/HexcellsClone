@@ -33,7 +33,7 @@ static const int cellOutlineWidth = 8;
 #define BACKGROUND      (Color){237, 239, 237, 255}
 #define SHADOWCOLOR     (Color){223, 223, 223, 170}
 
-static const int playareaOffsetX = 40;
+static const int playareaOffsetX = 30;
 static const int playareaOffsetY = 60;
 static const int screenWidth = 1600;
 static const int screenHeight = 900;
@@ -63,15 +63,15 @@ int revealedCells[308] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 int bombCount, remainingCellCount;
 int victory = 0;
 int solution[308] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int chk = 0;
-int currentLevel = 1;
+int chk = 12;
+int currentLevel = 0;
 
 
 typedef struct 
 {
     int seed[NUMBEROFCOLUMNS * NUMBEROFROWS];
-    int revealed[4];
-    int flagged[4]
+    int revealed[13];
+    int flagged[13]
 }Levels;
 
 Levels level[2] = {
@@ -103,8 +103,8 @@ Levels level[2] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
         },
-        {51,59,207,207},
-        {-1,-1,-1,-1}
+        {51,59,207,207,207,207,207,207,207,207,207,207,207},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
     },
     {
         {
@@ -123,8 +123,8 @@ Levels level[2] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
         },
-        {51,59,207,207},
-        {-1,-1,-1,-1}
+        {217,215,172,170,258,260,93,48,69,70,113,114,136},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
     }
 };
 
@@ -171,14 +171,27 @@ void flagCell(int index) {
     } 
 }
 
+void resetProgress(void) {
+    for (int i = 0; i < 308; i++)
+    {
+        revealedCells[i] = 0;
+        solution[i] = 0;
+    }
+    clickedCellIndex = -1;
+    chk = 0;
+    victory = 0;
+}
+
 void loadLevel(void) {
     // remainingCellCount = lvl1Seed[145];
     // bombCount = lvl1Seed[144];
-    for (int i = 0; i < 4; i++)
+    resetProgress();
+
+    for (int i = 0; i < 13; i++)
     {
         revealedCells[ level[currentLevel].revealed[i] ] = 1;
     }
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 13; i++)
     {
         if (level[currentLevel].flagged[i] >= 0)
         {
@@ -194,7 +207,7 @@ void loadLevel(void) {
             if (level[currentLevel].seed[i] > 0)
             {
                 solution[i] = 1;
-            } else if (level[0].seed[i] == -1)
+            } else if (level[currentLevel].seed[i] == -1)
             {
                 solution[i] = 1;
             }
@@ -204,8 +217,7 @@ void loadLevel(void) {
         {
             solution[i] = 2;
         }
-    }
-        
+    }       
 }
 
 void checkWin(void) {
@@ -235,6 +247,28 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
     DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
 }
 
+void loadMenu(void) {
+    BeginDrawing();
+    ClearBackground(BACKGROUND);
+    for (int k = 0; k < 12; k++)
+    {
+        for (int l = 0; l < 2; l++)
+        {
+            if (k == 11 && l == 1)
+            {
+                // nothing
+            } else
+            {
+                drawCell((Vector2){k*distanceBetweenCellsX + 400 + l*secondRowOffset, GetScreenHeight()/2 + 300 + l*distanceBetweenCellsY}, 6, cellRadius, NEWORANGE, DARKORANGE);
+                DrawText(TextFormat("%i", (int)(k + (l*12))), cellTextOffsetX + k*distanceBetweenCellsX + 400 + l*secondRowOffset,cellTextOffsetY + GetScreenHeight()/2 + 300 + l*distanceBetweenCellsY, 20, WHITE);
+            } 
+        }
+    }
+    DrawText("LEVELS", GetScreenWidth()/2 - MeasureText("LEVELS", 60) / 2, GetScreenHeight()/2 + 170, 60, SHADOWCOLOR);
+    
+    EndDrawing();
+}
+
 int main(void) 
 {
     // Initialization
@@ -243,25 +277,23 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "PutHexcells");
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    
+    SetTargetFPS(30);               // Set our game to run at 60 frames-per-second
     loadLevel();
+    
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {   
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (currentLevel >= 0)
         {
-            getClickedCellIndex();
-            revealCell(clickedCellIndex);
-        }
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
+            updateGame();
+            drawFrame();
+        } else
         {
-            getClickedCellIndex();
-            flagCell(clickedCellIndex);
+            loadMenu();
         }
         
-                           
-        drawFrame();
+        
+        
         //----------------------------------------------------------------------------------
     }
 
@@ -353,7 +385,19 @@ void drawFrame(void) {
         {
             DrawText("WIN", GetScreenWidth()/2 + 300, 40/2 - 10, 20, PINK);
             victory = 1;
+            currentLevel = currentLevel + 1;
+            loadLevel();
         }
+    
+    if (currentLevel == 0)
+    {
+        // Show tutorial text
+        DrawTexture(LoadTexture("mouse.png"), GetScreenWidth()/2 - 64/2, GetScreenHeight()-130, WHITE);
+        DrawText("Destroy a hex", GetScreenWidth()/2 - 200, GetScreenHeight() - 100, 20, DARKORANGE);
+        DrawText("Mark it as a bomb", GetScreenWidth()/2 + 52, GetScreenHeight() - 100, 20, NEWDARKBLUE);
+    }
+    
+
 
     DrawText(TextFormat("%i", (int)clickedCellIndex), GetScreenWidth() - 40, 40/2 - 10, 20, BLACK);
     DrawText(TextFormat("%i", (int)chk), GetScreenWidth() - 200, 40/2 - 10, 20, PINK);
@@ -363,5 +407,16 @@ void drawFrame(void) {
     EndDrawing();
 }
 
-
+void updateGame(void) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        getClickedCellIndex();
+        revealCell(clickedCellIndex);
+    }
+    if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
+    {
+        getClickedCellIndex();
+        flagCell(clickedCellIndex);
+    }
+}
 
