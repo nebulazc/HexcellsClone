@@ -62,7 +62,7 @@ int clickedCellIndex = -1;
 int revealedCells[308] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int bombCount, remainingCellCount;
 int victory = 0;
-int solution[308] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int solution[308];
 int chk = 12;
 int currentLevel = 0;
 
@@ -72,21 +72,10 @@ typedef struct
     int seed[NUMBEROFCOLUMNS * NUMBEROFROWS];
     int revealed[13];
     int flagged[13]
-}Levels;
+} Levels;
 
 Levels level[2] = {
     {
-//         {
-// 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-//  0,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,
-// 0,7,6,7,0,0,0,0,0,0,0,0,0,0,0,0,
-//  0,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,
-// 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-//  0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,
-// 0,-1,-1,-1,-1,1,7,0,0,0,0,0,0,0,0,0,
-//  0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,
-// 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-// },
         {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,7,7,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,
@@ -129,7 +118,7 @@ Levels level[2] = {
 };
 
 
-int getClickedCellIndex(void)
+void getClickedCellIndex(void)
 {
     Vector2 mouse = GetMousePosition();
     for (int row = 0; row < NUMBEROFROWS; row++)
@@ -322,38 +311,39 @@ void drawFrame(void) {
 
                 if (toc != 0)
                 {
-                    if (revealed == 1)
+                    switch (revealed)
                     {
-                        if (toc < 7)
-                        {
-                            // DrawPoly((Vector2){(row%2 * 35) + playareaOffsetX + col*75 + 75,playareaOffsetY + 40 + (row*65)}, 6, 40, 0, NEWDARKGRAY);
-                            // // Border
-                            // for (int width = 0; width < cellOutlineWidth; width++)
-                            // {
-                            //     DrawPolyLines((Vector2){(row%2 * 35) + playareaOffsetX + col*75 + 75,playareaOffsetY + 40 + (row*65)}, 6, 40 - width, 0, DARKERGRAY);
-                            // }
-                            drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWDARKGRAY, DARKERGRAY);
-
-                            if (toc == -1)
-                            {
-                                DrawText("0", (row%2 * secondRowOffset) + playareaOffsetX + cellTextOffsetX + col*distanceBetweenCellsX, playareaOffsetY + cellTextOffsetY + (row*distanceBetweenCellsY), 20, WHITE);
-                            } else
-                            {
-                                DrawText(TextFormat("%i", (int)toc), (row%2 * secondRowOffset) + playareaOffsetX + cellTextOffsetX + col*distanceBetweenCellsX, playareaOffsetY + cellTextOffsetY + (row*distanceBetweenCellsY), 20, WHITE);
-                            }
-                            
-                        } else
-                        {
-                            drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX,playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, RED, RED);
-                        }
-                    }
-                    else if (revealed == 2)
-                    {
-                        drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWBLUE, NEWDARKBLUE);
-                    }
-                    else
-                    {
+                    case 0:
                         drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWORANGE, DARKORANGE);
+                        break;
+                    case 1:
+                        switch (toc)
+                        {
+                        case -1:
+                            drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWDARKGRAY, DARKERGRAY);
+                            DrawText("0", (row%2 * secondRowOffset) + playareaOffsetX + cellTextOffsetX + col*distanceBetweenCellsX, playareaOffsetY + cellTextOffsetY + (row*distanceBetweenCellsY), 20, WHITE);
+                            break;
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                            drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWDARKGRAY, DARKERGRAY);
+                            DrawText(TextFormat("%i", (int)toc), (row%2 * secondRowOffset) + playareaOffsetX + cellTextOffsetX + col*distanceBetweenCellsX, playareaOffsetY + cellTextOffsetY + (row*distanceBetweenCellsY), 20, WHITE);
+                            break;
+                        case 7:
+                            drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX,playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, RED, RED);   
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case 2:
+                        drawCell((Vector2){(row%2 * secondRowOffset) + playareaOffsetX + col*distanceBetweenCellsX, playareaOffsetY + (row*distanceBetweenCellsY)}, 6, cellRadius, NEWBLUE, NEWDARKBLUE);
+                        break;
+                    default:
+                        break;
                     }
                 }
                 
