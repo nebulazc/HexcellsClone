@@ -382,7 +382,7 @@ void drawFrame(void) {
     if (currentLevel == 0)
     {
         // Show tutorial text
-        DrawTexture(LoadTexture("mouse.png"), GetScreenWidth()/2 - 64/2, GetScreenHeight()-130, WHITE);
+        DrawTexture(LoadTexture("Resources/mouse.png"), GetScreenWidth()/2 - 64/2, GetScreenHeight()-130, WHITE);
         DrawText("Destroy a hex", GetScreenWidth()/2 - 200, GetScreenHeight() - 100, 20, DARKORANGE);
         DrawText("Mark it as a bomb", GetScreenWidth()/2 + 52, GetScreenHeight() - 100, 20, NEWDARKBLUE);
     }
