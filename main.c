@@ -19,42 +19,11 @@
 *
 ********************************************************************************************/
 #include "raylib.h"
-//----------------------------------------------------------------------------------
-// RENDERING STUFF
-//----------------------------------------------------------------------------------
-
-#define NEWORANGE       (Color){ 255, 177, 41, 255 }
-#define DARKORANGE      (Color){ 254, 161, 3, 255 }
-#define DARKERGRAY      (Color){ 50, 50, 50, 255 }
-#define NEWDARKGRAY     (Color){ 62, 62, 62, 255 }
-#define NEWBLUE         (Color){ 6, 164, 235, 255 }
-#define NEWDARKBLUE     (Color){ 14, 157, 217, 255 }
-#define LIGHTLIGHTGRAY  (Color){222, 222, 222, 255}
-#define BACKGROUND      (Color){237, 239, 237, 255}
-#define SHADOWCOLOR     (Color){223, 223, 223, 170}
-#define WHITETEXT       (Color){235, 235, 235, 255}
-
-static const int playareaOffsetX = 30;
-static const int playareaOffsetY = 60;
-static const int screenWidth = 1600;
-static const int screenHeight = 900;
-
-static const int secondRowOffset = 35;
-static const int distanceBetweenCellsX = 70; // between centers of cells
-static const int distanceBetweenCellsY = 60;
-static const int cellRadius = 36;
-static const int cellTextOffsetY = -13;
-static const int shadowOffsetX = -8;
-static const int shadowOffsetY = 5;
-static const int cellOutlineWidth = 10;
-
+#include "levels.h"
 
 //----------------------------------------------------------------------------------
 // LOGIC STUFF
 //----------------------------------------------------------------------------------
-
-#define NUMBEROFROWS        14
-#define NUMBEROFCOLUMNS     22
 
 static const int hitboxVal = 2;
 
@@ -65,56 +34,6 @@ int solution[308];
 int chk;
 int currentLevel = 0;
 
-
-typedef struct 
-{
-    int seed[NUMBEROFCOLUMNS * NUMBEROFROWS];
-    int revealed[13];
-    int flagged[13]
-} Levels;
-
-Levels level[2] = {
-    {
-        {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,7,7,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,
-        0,0,0,0,0,0,7,6,7,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,
-        0,0,0,0,0,0,7,7,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,-1,-1,1,7,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-        },
-        {51,59,207,207,207,207,207,207,207,207,207,207,207},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
-    },
-    {
-        {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,7,2,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,7,2,7,2,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,7,2,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,7,2,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,3,5,7,1,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,7,2,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-        },
-        {217,215,172,170,258,260,93,48,69,70,113,114,136},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
-    }
-};
 
 
 void getClickedCellIndex(void)
@@ -235,15 +154,20 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
     DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
 
     // glow
-    DrawPolyLines(center, sides, radius + 2, 0, (Color){color.r, color.g, color.b, 140});
-    DrawPolyLines(center, sides, radius + 3, 0, (Color){color.r, color.g, color.b, 100});
-    DrawPolyLines(center, sides, radius + 4, 0, (Color){color.r, color.g, color.b, 70});
-    DrawPolyLines(center, sides, radius + 5, 0, (Color){color.r, color.g, color.b, 50});
-    DrawPolyLines(center, sides, radius + 6, 0, (Color){color.r, color.g, color.b, 30});
-    DrawPolyLines(center, sides, radius + 7, 0, (Color){color.r, color.g, color.b, 10});
-    DrawPolyLines(center, sides, radius + 8, 0, (Color){color.r, color.g, color.b, 10});
+    if (color.r != 62 && color.g != 62 && color.b != 62)
+    {
+        DrawPolyLines(center, sides, radius + 2, 0, (Color){color.r, color.g, color.b, 140});
+        DrawPolyLines(center, sides, radius + 3, 0, (Color){color.r, color.g, color.b, 100});
+        DrawPolyLines(center, sides, radius + 4, 0, (Color){color.r, color.g, color.b, 70});
+        DrawPolyLines(center, sides, radius + 5, 0, (Color){color.r, color.g, color.b, 50});
+        DrawPolyLines(center, sides, radius + 6, 0, (Color){color.r, color.g, color.b, 30});
+        DrawPolyLines(center, sides, radius + 7, 0, (Color){color.r, color.g, color.b, 10});
+        DrawPolyLines(center, sides, radius + 8, 0, (Color){color.r, color.g, color.b, 10});
+    }
+    
+    
 
-    if (text != -1) { DrawText(TextFormat("%i", (int)text), center.x - MeasureText("8", 30)/2, center.y + cellTextOffsetY, 30, WHITETEXT); }
+    if (text != -1) { DrawText(TextFormat("%i", (int)text), center.x - MeasureText(TextFormat("%i", (int)text), 30)/2, center.y + cellTextOffsetY, 30, WHITETEXT); }
 }
 
 void loadMenu(void) {
@@ -275,16 +199,13 @@ int main(void)
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "PutHexcells");
-    
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    loadLevel();
-
+    SetTargetFPS(60);
     InitAudioDevice();
     Music music = LoadMusicStream("resources/Puzzle-Game-2_Looping.mp3");
     music.looping = true;
     SetMusicVolume(music, 0.05);
     PlayMusicStream(music);
-
+    loadLevel();
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {   
@@ -405,4 +326,3 @@ void updateGame(void) {
         flagCell(clickedCellIndex);
     }  
 }
-
