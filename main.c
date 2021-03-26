@@ -170,6 +170,43 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
     if (text != -1) { DrawText(TextFormat("%i", (int)text), center.x - MeasureText(TextFormat("%i", (int)text), 30)/2, center.y + cellTextOffsetY, 30, WHITETEXT); }
 }
 
+void drawRestartButton(void) {
+    Vector2 mouse = GetMousePosition();
+    bool collision = CheckCollisionPointCircle(mouse, (Vector2){playareaOffsetX + 21*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY)}, cellRadius - hitboxVal);
+    if (collision)
+    {
+        drawCell((Vector2){playareaOffsetX + 21*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY) - (1*35)}, 6, cellRadius, NEWORANGE, DARKORANGE, -1);
+        DrawTextureEx(LoadTexture("Resources/restart.png"), (Vector2){GetScreenWidth()-120, GetScreenHeight()-20 - (1*35)}, 0, 0.3125, WHITE);
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+        loadLevel();
+        }
+    } else
+    {
+        drawCell((Vector2){playareaOffsetX + 21*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY)}, 6, cellRadius, NEWORANGE, DARKORANGE, -1);
+        DrawTextureEx(LoadTexture("Resources/restart.png"), (Vector2){GetScreenWidth()-120, GetScreenHeight()-20}, 0, 0.3125, WHITE);
+    } 
+}
+
+void drawExitButton(void) {
+    Vector2 mouse = GetMousePosition();
+    bool collision = CheckCollisionPointCircle(mouse, (Vector2){playareaOffsetX + 22*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY)}, cellRadius - hitboxVal);
+    if (collision)
+    {
+        drawCell((Vector2){playareaOffsetX + 22*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY) - (1*35)}, 6, cellRadius, NEWORANGE, DARKORANGE, -1);
+        DrawTextureEx(LoadTexture("Resources/exit.png"), (Vector2){GetScreenWidth()-120 + distanceBetweenCellsX, GetScreenHeight()-20 - (1*35)}, 0, 0.3125, WHITE);
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+        currentLevel = -1;
+        resetProgress();
+        }
+    } else
+    {
+        drawCell((Vector2){playareaOffsetX + 22*distanceBetweenCellsX, playareaOffsetY + (14*distanceBetweenCellsY)}, 6, cellRadius, NEWORANGE, DARKORANGE, -1);
+        DrawTextureEx(LoadTexture("Resources/exit.png"), (Vector2){GetScreenWidth()-120 + distanceBetweenCellsX, GetScreenHeight()-20}, 0, 0.3125, WHITE);
+    } 
+}
+
 void loadMenu(void) {
     BeginDrawing();
     ClearBackground(BACKGROUND);
@@ -307,7 +344,8 @@ void drawFrame(void) {
                 }
             }
         }
- 
+    drawRestartButton();
+    drawExitButton();
     if (currentLevel == 0)
     {
         // Show tutorial text
@@ -316,7 +354,6 @@ void drawFrame(void) {
         DrawText("Mark it as a bomb", GetScreenWidth()/2 + 52, GetScreenHeight() - 100, 20, NEWDARKBLUE);
     }
     
-    DrawRectangle(GetScreenWidth()-resetButtonWidth, GetScreenHeight()-resetButtonHeight, resetButtonWidth, resetButtonHeight, BLUE);
     DrawText(TextFormat("%i", (int)clickedCellIndex), GetScreenWidth() - 40, 40/2 - 10, 20, BLACK);
     DrawText(TextFormat("%i", (int)chk), GetScreenWidth() - 200, 40/2 - 10, 20, PINK);
     // DrawText(TextFormat("%i", (int)remainingCellCount), GetScreenWidth()/2 - 300, 40/2 - 10, 20, BLACK);
@@ -344,10 +381,12 @@ void updateGame(void) {
     {
         getClickedCellIndex();
         revealCell(clickedCellIndex);
+        clickedCellIndex = -1;
     }
     if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
     {
         getClickedCellIndex();
         flagCell(clickedCellIndex);
+        clickedCellIndex = -1;
     }  
 }
