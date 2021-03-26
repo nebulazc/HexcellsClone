@@ -32,7 +32,7 @@ int revealedCells[308];
 int victory = 0;
 int solution[308];
 int chk;
-int currentLevel = 0;
+int currentLevel = -1;
 
 
 
@@ -183,12 +183,33 @@ void loadMenu(void) {
             } else
             {
                 drawCell((Vector2){k*distanceBetweenCellsX + 400 + l*secondRowOffset, GetScreenHeight()/2 + 300 + l*distanceBetweenCellsY}, 6, cellRadius, NEWORANGE, DARKORANGE, k + (l*12));
+                // DrawCircle(k*distanceBetweenCellsX + 400 + l*secondRowOffset, GetScreenHeight()/2 + 300 + l*distanceBetweenCellsY, cellRadius - hitboxVal, GREEN);
             } 
         }
     }
     DrawText("LEVELS", GetScreenWidth()/2 - MeasureText("LEVELS", 60) / 2, GetScreenHeight()/2 + 170, 60, SHADOWCOLOR);
     
     EndDrawing();
+}
+
+void updateMenu(void) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mouse = GetMousePosition();
+        for (int row = 0; row < 2; row++)
+            {
+            for (int col = 0; col < 12; col++)
+            {
+                bool collision = CheckCollisionPointCircle(mouse, (Vector2){col*distanceBetweenCellsX + 400 + row*secondRowOffset, GetScreenHeight()/2 + 300 + row*distanceBetweenCellsY}, cellRadius - hitboxVal);
+                if (collision)
+                {
+                    currentLevel = col + (row*12);
+                    loadLevel();
+
+                }
+            }
+        }
+    }
 }
 
 
@@ -217,6 +238,7 @@ int main(void)
         } else
         {
             loadMenu();
+            updateMenu();
         }
 
     }
@@ -291,7 +313,7 @@ void drawFrame(void) {
         DrawText("Mark it as a bomb", GetScreenWidth()/2 + 52, GetScreenHeight() - 100, 20, NEWDARKBLUE);
     }
     
-
+    DrawRectangle(GetScreenWidth()-resetButtonWidth, GetScreenHeight()-resetButtonHeight, resetButtonWidth, resetButtonHeight, BLUE);
     DrawText(TextFormat("%i", (int)clickedCellIndex), GetScreenWidth() - 40, 40/2 - 10, 20, BLACK);
     DrawText(TextFormat("%i", (int)chk), GetScreenWidth() - 200, 40/2 - 10, 20, PINK);
     // DrawText(TextFormat("%i", (int)remainingCellCount), GetScreenWidth()/2 - 300, 40/2 - 10, 20, BLACK);

@@ -25,3 +25,6 @@ static const int cellTextOffsetY = -13;
 static const int shadowOffsetX = -8;
 static const int shadowOffsetY = 5;
 static const int cellOutlineWidth = 10;
+
+static const int resetButtonWidth = 80;
+static const int resetButtonHeight = 80;
