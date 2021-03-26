@@ -173,6 +173,10 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
 void loadMenu(void) {
     BeginDrawing();
     ClearBackground(BACKGROUND);
+    DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2 - 6, GetScreenHeight() / 2 - 294, 100, SHADOWCOLOR);
+    DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2, GetScreenHeight() / 2 - 300, 100, GRAY);
+    DrawText("clone by Mateusz Wisniewski", GetScreenWidth()/2 - MeasureText("clone by Mateusz Wisniewski", 40) / 2, GetScreenHeight() / 2 - 200, 40, LIGHTGRAY);
+
     for (int k = 0; k < 12; k++)
     {
         for (int l = 0; l < 2; l++)
@@ -205,7 +209,6 @@ void updateMenu(void) {
                 {
                     currentLevel = col + (row*12);
                     loadLevel();
-
                 }
             }
         }
