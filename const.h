@@ -17,11 +17,11 @@ static const int playareaOffsetY = 60;
 static const int screenWidth = 1600;
 static const int screenHeight = 900;
 
-static const int NUMBEROFROWS[3] = {8,14,16};
+static const int NUMBEROFROWS[3] = {8,14,18};
 static const int NUMBEROFCOLUMNS[3] = {14,22,28};
 static const int secondRowOffset[3] = {53,35,27};
 static const int distanceBetweenCellsX[3] = {105,70,55}; // between centers of cells
-static const int distanceBetweenCellsY[3] = {90,60,52};
+static const int distanceBetweenCellsY[3] = {90,60,47};
 static const int cellRadius[3] = {52,36,28};
 static const int cellTextOffsetY[3] = {-17,-13,-12};
 static const int cellTextSize[3] = {40,30,26};
