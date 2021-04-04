@@ -23,8 +23,8 @@ static const int secondRowOffset[3] = {53,35,27};
 static const int distanceBetweenCellsX[3] = {105,70,55}; // between centers of cells
 static const int distanceBetweenCellsY[3] = {90,60,47};
 static const int cellRadius[3] = {52,36,28};
-static const int cellTextOffsetY[3] = {-18,-15,-13};
-static const int cellTextSize[3] = {40,30,26};
+static const int cellTextOffsetY[3] = {-24,-15,-13};
+static const int cellTextSize[3] = {50,30,26};
 
 static const int cellOutlineWidth[3] = {10, 6, 5};
 
