@@ -299,6 +299,7 @@ void loadMenu(void) {
     DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2 - 6, GetScreenHeight() / 2 - 294, 100, SHADOWCOLOR);
     DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2, GetScreenHeight() / 2 - 300, 100, GRAY);
     DrawText("clone by Mateusz Wisniewski", GetScreenWidth()/2 - MeasureText("clone by Mateusz Wisniewski", 40) / 2, GetScreenHeight() / 2 - 200, 40, LIGHTGRAY);
+    DrawText("Music by Eric Matyas (www.soundimage.org)", 1, GetScreenHeight()-20, 20, LIGHTGRAY);
 
     for (int k = 0; k < 7; k++)
     {
