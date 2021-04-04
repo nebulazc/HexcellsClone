@@ -40,6 +40,9 @@ int currentLevel = -1;
 //----------------------------------------------------------------------------------
 
 int currentLayout = 1;
+Font defaultFont;
+Texture2D test = { 0 };
+
 
 
 void getClickedCellIndex(void)
@@ -155,7 +158,7 @@ void checkWin(void) {
     }
 }
 
-void drawCell(Vector2 center, int sides, float radius, Color color, Color outlineColor, int text) {
+void olddrawCell(Vector2 center, int sides, float radius, Color color, Color outlineColor, int text) {
     if (text < 30)
     {
         DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
@@ -165,20 +168,9 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
             DrawPolyLines(center, sides, radius - width, 0, outlineColor);
         }
 
-        DrawPolyLines(center, sides, radius, 0, LIGHTLIGHTGRAY);
-        DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
+        DrawPolyLines(center, sides, radius, 0, WHITETEXT);
+        DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT);
 
-        // glow
-        if (color.r != 62 && color.g != 62 && color.b != 62)
-        {
-            DrawPolyLines(center, sides, radius + 2, 0, (Color){color.r, color.g, color.b, 140});
-            DrawPolyLines(center, sides, radius + 3, 0, (Color){color.r, color.g, color.b, 100});
-            DrawPolyLines(center, sides, radius + 4, 0, (Color){color.r, color.g, color.b, 70});
-            DrawPolyLines(center, sides, radius + 5, 0, (Color){color.r, color.g, color.b, 50});
-            DrawPolyLines(center, sides, radius + 6, 0, (Color){color.r, color.g, color.b, 30});
-            DrawPolyLines(center, sides, radius + 7, 0, (Color){color.r, color.g, color.b, 10});
-            DrawPolyLines(center, sides, radius + 8, 0, (Color){color.r, color.g, color.b, 10});
-        }
         if (text != -1) 
         { 
             if (text < 10)
@@ -191,10 +183,7 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
             } else {
                 int cellText = text%10;
                 DrawText(TextFormat("-%i-", (int)cellText), center.x - MeasureText(TextFormat("-%i-", (int)cellText), cellTextSize[currentLayout])/2, center.y + cellTextOffsetY[currentLayout], cellTextSize[currentLayout], WHITETEXT); 
-            }
-            
-            
-            
+            }  
         }
     } else if (text < 50)
     {
@@ -209,18 +198,75 @@ void drawCell(Vector2 center, int sides, float radius, Color color, Color outlin
         int cellText = text%10;
         DrawText(TextFormat("-%i-", (int)cellText), (cellRadius[currentLayout] * 0.3F) + center.x - MeasureText(TextFormat("-%i-", (int)cellText), cellTextSize[currentLayout])/2, center.y + cellTextOffsetY[currentLayout], cellTextSize[currentLayout], DARKERGRAY);
     }
+
 }
 
-void drawBackground(void) {
-    for (int i = 0; i < NUMBEROFROWS[currentLayout]; i++)
-    {
-        if (i%2==0)
+void drawCell(Vector2 center, int sides, float radius, int rawData) {
+
+    if (rawData == -1) {
+        // orange cell
+        DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR);
+        DrawPoly(center, sides, radius, 0, NEWORANGE);
+        for (int width = 2; width < cellOutlineWidth[currentLayout]; width++)
         {
-            DrawRectangle(0,i*distanceBetweenCellsY[currentLayout] + playareaOffsetY - distanceBetweenCellsY[currentLayout]/2,screenWidth,distanceBetweenCellsY[currentLayout],(Color){234,236,234,255});
-        } 
+            DrawPolyLines(center, sides, radius - width, 0, DARKORANGE);
+        }
+        DrawPolyLines(center, sides, radius, 0, WHITETEXT);
+        DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT);
+    } else if (rawData == -2) {
+        // marked cell (blue)
+        DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR);
+        DrawPoly(center, sides, radius, 0, NEWBLUE);
+        for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
+            DrawPolyLines(center, sides, radius - width, 0, NEWDARKBLUE);
+        }
+        DrawPolyLines(center, sides, radius, 0, WHITETEXT);
+        DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT);
+    } else {
+        // every other cell
+        int rotation = rawData/100;
+        int type = rawData/10;
+        int value = rawData%10;
+
+        if (type < 3) {
+
+            DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+            DrawPoly(center, sides, radius, 0, NEWDARKGRAY);
+            for (int width = 2; width < cellOutlineWidth[currentLayout]; width++)
+            {
+                DrawPolyLines(center, sides, radius - width, 0, DARKERGRAY);
+            }
+            DrawPolyLines(center, sides, radius, 0, WHITETEXT);
+            DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT); 
+        }
+
+        switch (type) {
+        case 0:
+            if (value < 7) {
+                DrawTextEx(defaultFont, TextFormat("%i", (int)value), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("%i", (int)value), cellTextSize[currentLayout], fontSpacing).x / 2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout],1, WHITETEXT);
+            } break;
+        case 1:
+            DrawTextEx(defaultFont, TextFormat("{%i}", (int)value), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("{%i}", (int)value), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], 1, WHITETEXT);
+            break;
+        case 2:
+            DrawTextEx(defaultFont, TextFormat("-%i-", (int)value), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("-%i-", (int)value), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], 1, WHITETEXT);
+            break;
+        case 4:
+            DrawTextEx(defaultFont, TextFormat("%i ", (int)value), (Vector2){(cellRadius[currentLayout] * 0.6F) + center.x - MeasureTextEx(defaultFont, TextFormat("%i ", (int)value), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], 1, DARKERGRAY);
+            break;
+        case 5:
+            DrawTextEx(defaultFont, TextFormat("{%i} ", (int)value), (Vector2){(cellRadius[currentLayout] * 0.6F) + center.x - MeasureTextEx(defaultFont, TextFormat("{%i}---", (int)value), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], 1, DARKERGRAY);
+            break;
+        case 6:
+            DrawTextEx(defaultFont, TextFormat("-%i-", (int)value), (Vector2){(cellRadius[currentLayout] * 0.6F) + center.x - MeasureTextEx(defaultFont, TextFormat("-%i-- -", (int)value), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], 1, DARKERGRAY);
+            break;
+
+        default:
+            break;
+        }
     }
-    
 }
+
 
 void drawMenuCell(Vector2 center, int sides, float radius, Color color, Color outlineColor, int text) {
         DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
@@ -233,13 +279,6 @@ void drawMenuCell(Vector2 center, int sides, float radius, Color color, Color ou
         DrawPolyLines(center, sides, radius, 0, LIGHTLIGHTGRAY);
         DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
 
-        DrawPolyLines(center, sides, radius + 2, 0, (Color){color.r, color.g, color.b, 140});
-        DrawPolyLines(center, sides, radius + 3, 0, (Color){color.r, color.g, color.b, 100});
-        DrawPolyLines(center, sides, radius + 4, 0, (Color){color.r, color.g, color.b, 70});
-        DrawPolyLines(center, sides, radius + 5, 0, (Color){color.r, color.g, color.b, 50});
-        DrawPolyLines(center, sides, radius + 6, 0, (Color){color.r, color.g, color.b, 30});
-        DrawPolyLines(center, sides, radius + 7, 0, (Color){color.r, color.g, color.b, 10});
-        DrawPolyLines(center, sides, radius + 8, 0, (Color){color.r, color.g, color.b, 10});
         
         DrawText(TextFormat("%i", (int)text), center.x - MeasureText(TextFormat("%i", (int)text), cellTextSize[currentLayout])/2, center.y + cellTextOffsetY[currentLayout], cellTextSize[currentLayout], WHITETEXT); 
 }
@@ -249,7 +288,7 @@ void drawRestartButton(Texture2D texture) {
     bool collision = CheckCollisionPointCircle(mouse, (Vector2){playareaOffsetX[1] + 21*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, cellRadius[1] - hitboxVal);
     if (collision)
     {
-        drawCell((Vector2){playareaOffsetX[1] + 21*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1]) - (1*35)}, 6, cellRadius[1], NEWORANGE, DARKORANGE, -1);
+        drawCell((Vector2){playareaOffsetX[1] + 21*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1]) - (1*35)}, 6, cellRadius[1], -1);
         DrawTextureEx(texture, (Vector2){GetScreenWidth()-120, GetScreenHeight()-20 - (1*35)}, 0, 0.3125, WHITE);
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
@@ -257,7 +296,7 @@ void drawRestartButton(Texture2D texture) {
         }
     } else
     {
-        drawCell((Vector2){playareaOffsetX[1] + 21*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], NEWORANGE, DARKORANGE, -1);
+        drawCell((Vector2){playareaOffsetX[1] + 21*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], -1);
         DrawTextureEx(texture, (Vector2){GetScreenWidth()-120, GetScreenHeight()-20}, 0, 0.3125, WHITE);
     } 
 }
@@ -267,7 +306,7 @@ void drawExitButton(Texture2D texture) {
     bool collision = CheckCollisionPointCircle(mouse, (Vector2){playareaOffsetX[1] + 22*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, cellRadius[currentLayout] - hitboxVal);
     if (collision)
     {
-        drawCell((Vector2){playareaOffsetX[1] + 22*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1]) - (1*35)}, 6, cellRadius[1], NEWORANGE, DARKORANGE, -1);
+        drawCell((Vector2){playareaOffsetX[1] + 22*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1]) - (1*35)}, 6, cellRadius[1], -1);
         DrawTextureEx(texture, (Vector2){GetScreenWidth()-120 + distanceBetweenCellsX[1], GetScreenHeight()-20 - (1*35)}, 0, 0.3125, WHITE);
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
@@ -277,7 +316,7 @@ void drawExitButton(Texture2D texture) {
         }
     } else
     {
-        drawCell((Vector2){playareaOffsetX[1] + 22*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], NEWORANGE, DARKORANGE, -1);
+        drawCell((Vector2){playareaOffsetX[1] + 22*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], -1);
         DrawTextureEx(texture, (Vector2){GetScreenWidth()-120 + distanceBetweenCellsX[1], GetScreenHeight()-20}, 0, 0.3125, WHITE);
     } 
 }
@@ -285,8 +324,9 @@ void drawExitButton(Texture2D texture) {
 void loadMenu(void) {
     BeginDrawing();
     ClearBackground(BACKGROUND);
-    DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2 - 6, GetScreenHeight() / 2 - 294, 100, SHADOWCOLOR);
-    DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2, GetScreenHeight() / 2 - 300, 100, GRAY);
+    
+    DrawTextEx(defaultFont, "Hexcells", (Vector2){GetScreenWidth()/2 - MeasureTextEx(defaultFont, "Hexcells", 100, fontSpacing).x / 2 - 6, GetScreenHeight() / 2 - 294}, 100, fontSpacing, SHADOWCOLOR);
+    DrawTextEx(defaultFont, "Hexcells", (Vector2){GetScreenWidth()/2 - MeasureTextEx(defaultFont, "Hexcells", 100, fontSpacing).x / 2, GetScreenHeight() / 2 - 300}, 100, fontSpacing, GRAY);
     DrawText("clone by Mateusz Wisniewski", GetScreenWidth()/2 - MeasureText("clone by Mateusz Wisniewski", 40) / 2, GetScreenHeight() / 2 - 200, 40, LIGHTGRAY);
 
     for (int k = 0; k < 12; k++)
@@ -346,6 +386,13 @@ int main(void)
     Texture2D exitTexture = LoadTexture("Resources/exit.png");
     Texture2D mouseTexture = LoadTexture("Resources/mouse.png");
 
+    test = LoadTexture("Resources/test.png");
+
+
+    defaultFont = LoadFontEx("Resources/Roboto-Medium.ttf", 32, 0, 0);
+    GenTextureMipmaps(&defaultFont.texture);
+    SetTextureFilter(defaultFont.texture, FILTER_TRILINEAR);
+
     // loadLevel();
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -355,7 +402,6 @@ int main(void)
         {
             updateGame();
             drawFrame();
-            drawBackground();
             drawRestartButton(restartTexture);
             drawExitButton(exitTexture);
 
@@ -379,7 +425,7 @@ int main(void)
     return 0;
 }
 
-void drawFrame(void) {
+void drawFrame() {
     BeginDrawing();
     
     ClearBackground(BACKGROUND);
@@ -398,13 +444,13 @@ void drawFrame(void) {
                     switch (revealed)
                     {
                     case 0:
-                        drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], NEWORANGE, DARKORANGE, -1);
+                        drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], -1);
                         break;
                     case 1:
                         switch (toc)
                         {
                         case -1:
-                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], NEWDARKGRAY, DARKERGRAY, 0);
+                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], 0);
                             break;
                         case 1:
                         case 2:
@@ -412,18 +458,18 @@ void drawFrame(void) {
                         case 4:
                         case 5:
                         case 6:
-                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], NEWDARKGRAY, DARKERGRAY, toc);
+                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], toc);
                             break;
                         case 7:
-                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout],playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], RED, RED, -1);   
+                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout],playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], 7);   
                             break;
                         default:
-                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], NEWDARKGRAY, DARKERGRAY, toc);
+                            drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], toc);
                             break;
                         }
                         break;
                     case 2:
-                        drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], NEWBLUE, NEWDARKBLUE, -1);
+                        drawCell((Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, 6, cellRadius[currentLayout], -2);
                         break;
                     default:
                         break;
