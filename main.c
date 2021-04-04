@@ -251,7 +251,7 @@ void drawMenuCell(Vector2 center, int sides, float radius, Color color, Color ou
         DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
 
         
-        DrawText(TextFormat("%i", (int)text), center.x - MeasureText(TextFormat("%i", (int)text), cellTextSize[currentLayout])/2, center.y + cellTextOffsetY[currentLayout], cellTextSize[currentLayout], WHITETEXT); 
+        DrawTextEx(defaultFont, TextFormat("%i", (int)text), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("%i", (int)text), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], fontSpacing, WHITETEXT); 
 }
 
 void drawRestartButton() {
@@ -467,6 +467,8 @@ void drawFrame() {
     } else if (currentLevel == 11)
     {
         DrawTextEx(defaultFont, "Numbers like this -3- give additional\ninformation that the 3 bombs\nare NOT connected", (Vector2){80, GetScreenHeight()/2 - 100}, 32, fontSpacing, DARKGRAY);
+    } else if (currentLevel == 14) {
+        DrawTextEx(defaultFont, "Congratulations for beating the game!", (Vector2){10, GetScreenHeight()/2 - 100}, 32, fontSpacing, DARKGRAY);
     }
 
 
