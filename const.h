@@ -38,3 +38,6 @@ static const int fontSpacing = 1;
 
 static const int shadowOffsetX = -8;
 static const int shadowOffsetY = 5;
+
+static const int flaggedGradientRealCycle = 24;
+static const int flaggedGradientFullCycle = flaggedGradientRealCycle * 4;
