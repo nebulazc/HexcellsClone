@@ -5,9 +5,9 @@ Made with raylib (www.raylib.com/)
 
 Original game: https://store.steampowered.com/app/265890/Hexcells/
 
-![screenshot1](https://raw.githubusercontent.com/nebulazc/HexcellsClone/main/Images/1.png?token=AQGBJC3SADG5P4LDDNTXU23AOMTZY)
-![screenshot2](https://raw.githubusercontent.com/nebulazc/HexcellsClone/main/Images/2.png?token=AQGBJC5KTCADGNGCW2ASHOLAOMT7K)
-![screenshot3](https://raw.githubusercontent.com/nebulazc/HexcellsClone/main/Images/3.png?token=AQGBJCZXHTWNJYG54LRSTJLAOMUA4)
+![](Images/1.png)
+![](Images/2.png)
+![](Images/3.png)
 
 ## Compiling
 - Install raylib
