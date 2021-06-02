@@ -36,22 +36,29 @@ int currentLevel = -1; // tracks current level
 // save file data, when a game first starts it loads a default "000..." data (no levels beaten), then if a save exists it overwrites it with proper save data 
 char gameProgress[LEVELCOUNT] = "000000000000000"; // 0 is unbeaten, 1 is beaten level
 
+// stores level data
 int levelSeed[504] = { 0 };
 int levelRevealed[20] = { 0 };
 int levelFlagged[13] = { 0 };
 
+int lastMove = -1; // stores last move and whether undoLastMove() is available
+
+int musicPlaying = 1; // is music playing, 1 is yes
 
 // === Rendering ===
 int currentLayout = 1; // level layout
+// for level change animation
 int onTransition = 0;
 int transitionFrameCounter = 0;
 
+// for flagged cell animation
 int flaggedFrameCounter = 0;
 int flaggedFrameDir = 1;
 
 // assets which will be loaded in main() during initialization
 Font defaultFont;
-Texture2D mouseTexture, exitTexture, restartTexture;
+Texture2D mouseTexture, exitTexture, restartTexture, musicTexture, undoTexture;
+Music music;
 
 // =======================================
 //
@@ -59,6 +66,28 @@ Texture2D mouseTexture, exitTexture, restartTexture;
 //
 // =======================================
 
+Color flaggedCellColor(void);
+void updateColor();
+void drawCell(Vector2 center, int sides, float radius, int rawData);
+int getClickedCellIndex();
+void drawMenuCell(Vector2 center, int sides, float radius, Color color, Color outlineColor, int text);
+void drawRestartButton();
+void drawExitButton();
+void drawUndoButton();
+void drawMusicButton();
+void drawMenu();
+void drawTutorialText();
+void drawLevelTransition();
+void drawFrame();
+
+void revealCell(int index);
+void flagCell(int index);
+void resetProgress();
+void loadLevel();
+void updateMenu();
+void loadSaveData();
+void updateGame();
+void undoLastMove();
 
 // =======================================
 // RENDERING
@@ -191,16 +220,17 @@ void drawCell(Vector2 center, int sides, float radius, int rawData) {
     // CELL BODY
     if (rawData == -1) {
         // orange cell
-        DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+        DrawPoly((Vector2){center.x + shadowOffsetX[currentLayout], center.y + shadowOffsetY[currentLayout]}, sides, radius, 0, SHADOWCOLOR); // Shadow
         DrawPoly(center, sides, radius, 0, NEWORANGE);
         for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
             DrawPolyLines(center, sides, radius - width, 0, DARKORANGE); // Cell Outline
         }
         DrawPolyLines(center, sides, radius, 0, WHITETEXT);
         DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT);
+        DrawPolyLines(center, sides, radius + 2, 0, WHITETEXT);
     } else if (rawData == -2) {
         // marked cell (blue)
-        DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+        DrawPoly((Vector2){center.x + shadowOffsetX[currentLayout], center.y + shadowOffsetY[currentLayout]}, sides, radius, 0, SHADOWCOLOR); // Shadow
         DrawPoly(center, sides, radius, 0, flaggedCellColor());
         for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
             DrawPolyLines(center, sides, radius - width, 0, flaggedCellColor()); // Cell Outline
@@ -209,7 +239,7 @@ void drawCell(Vector2 center, int sides, float radius, int rawData) {
         DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT);
     } else if (rawData == -3) {
         // restart/exit cell
-        // DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+        // DrawPoly((Vector2){center.x + shadowOffsetX[currentLayout], center.y + shadowOffsetY[currentLayout]}, sides, radius, 0, SHADOWCOLOR); // Shadow
         DrawPoly(center, sides, radius, 0, (Color){255,177,41,70});
         for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
             DrawPolyLines(center, sides, radius - width, 0, (Color){254,161,3,30}); // Cell Outline
@@ -225,7 +255,7 @@ void drawCell(Vector2 center, int sides, float radius, int rawData) {
             // cell with text
             if (value < 7) {
                 // revealed cell
-                DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+                DrawPoly((Vector2){center.x + shadowOffsetX[currentLayout], center.y + shadowOffsetY[currentLayout]}, sides, radius, 0, SHADOWCOLOR); // Shadow
                 DrawPoly(center, sides, radius, 0, NEWDARKGRAY);
                 for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
                     DrawPolyLines(center, sides, radius - width, 0, DARKERGRAY);
@@ -234,7 +264,7 @@ void drawCell(Vector2 center, int sides, float radius, int rawData) {
                 DrawPolyLines(center, sides, radius + 1, 0, WHITETEXT); 
             } else {
                 // bomb cell
-                DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+                DrawPoly((Vector2){center.x + shadowOffsetX[currentLayout], center.y + shadowOffsetY[currentLayout]}, sides, radius, 0, SHADOWCOLOR); // Shadow
                 DrawPoly(center, sides, radius, 0, RED);
                 for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
                     DrawPolyLines(center, sides, radius - width, 0, RED);
@@ -282,13 +312,13 @@ void drawCell(Vector2 center, int sides, float radius, int rawData) {
 }
 
 
-int getClickedCellIndex(void) {
+int getClickedCellIndex() {
     // loops by every cell and checks if mouse is over any of them
     Vector2 mouse = GetMousePosition();
-    for (int row = 0; row < NUMBEROFROWS[currentLayout]; row++) {
-        for (int col = 0; col < NUMBEROFCOLUMNS[currentLayout]; col++) {
+    for (int row = 0; row < numberOfRows[currentLayout]; row++) {
+        for (int col = 0; col < numberOfColumns[currentLayout]; col++) {
             bool collision = CheckCollisionPointCircle(mouse, (Vector2){(row%2 * secondRowOffset[currentLayout]) + playareaOffsetX[currentLayout] + col*distanceBetweenCellsX[currentLayout], playareaOffsetY + (row*distanceBetweenCellsY[currentLayout])}, cellRadius[currentLayout] - hitboxVal);
-            if (collision) { return (row*NUMBEROFCOLUMNS[currentLayout] + col); }
+            if (collision) { return (row*numberOfColumns[currentLayout] + col); }
         }
     }
     return -1;
@@ -296,16 +326,16 @@ int getClickedCellIndex(void) {
 
 
 void drawMenuCell(Vector2 center, int sides, float radius, Color color, Color outlineColor, int text) {
-    DrawPoly((Vector2){center.x + shadowOffsetX, center.y + shadowOffsetY}, sides, radius, 0, SHADOWCOLOR); // Shadow
+    DrawPoly((Vector2){center.x + shadowOffsetX[1], center.y + shadowOffsetY[1]}, sides, radius, 0, SHADOWCOLOR); // Shadow
     DrawPoly(center, sides, radius, 0, color);
-    for (int width = 2; width < cellOutlineWidth[currentLayout]; width++) {
+    for (int width = 2; width < cellOutlineWidth[1]; width++) {
         DrawPolyLines(center, sides, radius - width, 0, outlineColor);
     }
 
     DrawPolyLines(center, sides, radius, 0, LIGHTLIGHTGRAY);
     DrawPolyLines(center, sides, radius + 1, 0, LIGHTLIGHTGRAY);
 
-    DrawTextEx(defaultFont, TextFormat("%i", (int)text), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("%i", (int)text), cellTextSize[currentLayout], fontSpacing).x/2, center.y + cellTextOffsetY[currentLayout]}, cellTextSize[currentLayout], fontSpacing, WHITETEXT); 
+    DrawTextEx(defaultFont, TextFormat("%i", (int)text), (Vector2){center.x - MeasureTextEx(defaultFont, TextFormat("%i", (int)text), cellTextSize[1], fontSpacing).x/2, center.y + cellTextOffsetY[1]}, cellTextSize[1], fontSpacing, WHITETEXT); 
 }
 
 
@@ -345,11 +375,42 @@ void drawExitButton() {
 }
 
 
-void drawMenu(void) {
+void drawUndoButton() {
+    if (lastMove == -2) {
+        drawCell((Vector2){playareaOffsetX[1] + 20*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], -3);
+        DrawTextureEx(undoTexture, (Vector2){GetScreenWidth()-120 - distanceBetweenCellsX[1], GetScreenHeight()-20}, 0, 0.3125, (Color){255,255,255,150});
+    } else {
+        Vector2 mouse = GetMousePosition();
+        // check if mouse is hovering over exit button
+        bool collision = CheckCollisionPointCircle(mouse, (Vector2){playareaOffsetX[1] + 20*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, cellRadius[currentLayout] - hitboxVal);
+        if (collision) {
+            drawCell((Vector2){playareaOffsetX[1] + 20*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1]) - (1*35)}, 6, cellRadius[1], -1);
+            DrawTextureEx(undoTexture, (Vector2){GetScreenWidth()-120 - distanceBetweenCellsX[1], GetScreenHeight()-20 - (1*35)}, 0, 0.3125, WHITE);
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                undoLastMove();
+            }
+        } else {
+            drawCell((Vector2){playareaOffsetX[1] + 20*distanceBetweenCellsX[1], playareaOffsetY + (14*distanceBetweenCellsY[1])}, 6, cellRadius[1], -3);
+            DrawTextureEx(undoTexture, (Vector2){GetScreenWidth()-120 - distanceBetweenCellsX[1], GetScreenHeight()-20}, 0, 0.3125, (Color){255,255,255,150});
+        } 
+    }
+}
+
+
+void drawMusicButton() {
+    if (musicPlaying == 1) {
+        DrawTextureEx(musicTexture, (Vector2){GetScreenWidth()-42, 0}, 0, 0.04, DARKERGRAY);
+    } else {
+        DrawTextureEx(musicTexture, (Vector2){GetScreenWidth()-42, 0}, 0, 0.04, (Color){ 50, 50, 50, 40});
+    }
+}
+
+
+void drawMenu() {
     // draw main menu screen
     BeginDrawing();
     ClearBackground(BACKGROUND);
-    
+    drawCell((Vector2){GetScreenWidth()/2, 130}, 6, cellRadius[2], -2);
     DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2 - 6, GetScreenHeight() / 2 - 294, 100, SHADOWCOLOR);
     DrawText("Hexcells", GetScreenWidth()/2 - MeasureText("Hexcells", 100) / 2, GetScreenHeight() / 2 - 300, 100, GRAY);
     DrawText("clone by Mateusz Wisniewski", GetScreenWidth()/2 - MeasureText("clone by Mateusz Wisniewski", 40) / 2, GetScreenHeight() / 2 - 200, 40, LIGHTGRAY);
@@ -366,30 +427,36 @@ void drawMenu(void) {
         }
     }
     DrawText("LEVELS", GetScreenWidth()/2 - MeasureText("LEVELS", 60) / 2, GetScreenHeight()/2 + 170, 60, SHADOWCOLOR);
+    drawMusicButton();
     EndDrawing();
 }
 
 
 void drawTutorialText() {
     // draw tutorial on selected levels
-    if (currentLevel == 0) {
+    switch (currentLevel) {
+    case 0:
         DrawTexture(mouseTexture, GetScreenWidth()/2 - 64/2, GetScreenHeight()-130, WHITE);
         DrawTextEx(defaultFont, "Destroy a hex", (Vector2){GetScreenWidth()/2 - 160, GetScreenHeight() - 100}, 20, fontSpacing, DARKORANGE);
         DrawTextEx(defaultFont, "Mark it as a bomb", (Vector2){GetScreenWidth()/2 + 52, GetScreenHeight() - 100}, 20, fontSpacing, NEWDARKBLUE);
-    } else if (currentLevel == 6)
-    {
+        break;
+    case 6:
         DrawTextEx(defaultFont, "Numbers outside the grid show the number \nof bombs in that row", (Vector2){80, GetScreenHeight()/2 - 100}, 32, fontSpacing, DARKGRAY);
-    } else if (currentLevel == 7)
-    {
+        break;
+    case 7:
         DrawTextEx(defaultFont, "Numbers like this {3} give additional information that the 3 bombs are consecutive", (Vector2){GetScreenWidth()/2 - MeasureTextEx(defaultFont, "Numbers like this {3} give additional information that the 3 bombs are consecutive", 32, fontSpacing).x/2 , GetScreenHeight() - 120}, 32, fontSpacing, DARKGRAY);
-    } else if (currentLevel == 9)
-    {
+        break;
+    case 9:
         DrawTextEx(defaultFont, "Numbers like this {3} give additional\ninformation that the 3 bombs\nare consecutive", (Vector2){80, GetScreenHeight()/2 - 100}, 32, fontSpacing, DARKGRAY);
-    } else if (currentLevel == 11)
-    {
+        break;
+    case 11:
         DrawTextEx(defaultFont, "Numbers like this -3- give additional\ninformation that the 3 bombs\nare NOT connected", (Vector2){80, GetScreenHeight()/2 - 100}, 32, fontSpacing, DARKGRAY);
-    } else if (currentLevel == 14) {
+        break;
+    case 14:
         DrawTextEx(defaultFont, "Congratulations for beating the game!", (Vector2){(GetScreenWidth() - MeasureTextEx(defaultFont, "Congratulations for beating the game!", 32, fontSpacing).x)/2, GetScreenHeight()/2 + 60}, 32, fontSpacing, DARKGRAY);
+        break;
+    default:
+        break;
     }
 }
 
@@ -420,13 +487,13 @@ void drawFrame() {
     BeginDrawing();
     ClearBackground(BACKGROUND);
 
-    DrawText(TextFormat("LEVEL %i", (int)currentLevel + 1), 0, GetScreenHeight()-80, 100, (Color){240,240,240,200});
+    DrawText(TextFormat("LEVEL %i", (int)currentLevel + 1), 0, GetScreenHeight()-63, 80, (Color){230,230,230,200});
 
     // draw board
-    for (int row = 0; row < NUMBEROFROWS[currentLayout]; row++) {
-        for (int col = 0; col < NUMBEROFCOLUMNS[currentLayout]; col++) {
-                int toc = levelSeed[row*NUMBEROFCOLUMNS[currentLayout] + col]; // type of cell
-                int revealed = revealedCells[row*NUMBEROFCOLUMNS[currentLayout] + col]; // is the cell revealed/flagged
+    for (int row = 0; row < numberOfRows[currentLayout]; row++) {
+        for (int col = 0; col < numberOfColumns[currentLayout]; col++) {
+                int toc = levelSeed[row*numberOfColumns[currentLayout] + col]; // type of cell
+                int revealed = revealedCells[row*numberOfColumns[currentLayout] + col]; // is the cell revealed/flagged
 
                 if (toc != 0) {   
                     // if cell is not empty (it exists)
@@ -489,6 +556,7 @@ void revealCell(int index) {
         if (levelSeed[index] != 0) {
             if (revealedCells[index] == 0) {
                 revealedCells[index] = 1;
+                if (lastMove != -2) {lastMove = index;}
             }
         }
     }
@@ -510,7 +578,7 @@ void flagCell(int index) {
 }
 
 
-void resetProgress(void) {
+void resetProgress() {
     // reset all variables used for game logic
     for (int i = 0; i < 504; i++) {
         revealedCells[i] = 0;
@@ -520,7 +588,7 @@ void resetProgress(void) {
 }
 
 
-void loadLevel(void) {
+void loadLevel() {
     resetProgress(); // resets level
     FILE *levelFile;
     char levelFilename[7];
@@ -555,7 +623,7 @@ void loadLevel(void) {
     }
 
     // build level solution to later compare to
-    for (int i = 0; i < (NUMBEROFCOLUMNS[currentLayout] * NUMBEROFROWS[currentLayout]); i++) {
+    for (int i = 0; i < (numberOfColumns[currentLayout] * numberOfRows[currentLayout]); i++) {
         if (levelSeed[i] < 7) {
             if (levelSeed[i] > 0) {
                 solution[i] = 1;
@@ -568,11 +636,12 @@ void loadLevel(void) {
         } else if (levelSeed[i] < 70) {
             solution[i] = 1;
         }
-    }       
+    }
+    lastMove = -1;
 }
 
 
-void updateMenu(void) {
+void updateMenu() {
     // handle left click on menu screen
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         Vector2 mouse = GetMousePosition();
@@ -582,9 +651,27 @@ void updateMenu(void) {
                 if (collision) {
                     currentLevel = col + (row*7);
                     loadLevel(); // load level the user chose
+                    return;
                 }
             }
         }
+        bool collision = CheckCollisionPointRec(mouse, (Rectangle){GetScreenWidth()-42, 0, 42, 40});
+        if (collision) {
+            if (musicPlaying == 1) {
+                SetMusicVolume(music, 0);
+            } else {
+                SetMusicVolume(music, 0.05);
+            }
+            musicPlaying *= -1;
+        }
+    }
+}
+
+
+void undoLastMove() {
+    if (lastMove >= 0) {
+        revealedCells[lastMove] = 0;
+        lastMove = -2;
     }
 }
 
@@ -596,11 +683,11 @@ void loadSaveData() {
 }
 
 
-void updateGame(void) {
+void updateGame() {
     if (currentLevel < 14) {
         // check if revealedCells is same as solution, if yes chk = 0
         chk = 0;
-        for (int i = 0; i < (NUMBEROFCOLUMNS[currentLayout] * NUMBEROFROWS[currentLayout]); i++) {
+        for (int i = 0; i < (numberOfColumns[currentLayout] * numberOfRows[currentLayout]); i++) {
             if (revealedCells[i] != solution[i]) {
                 chk = chk + 1;
             }
@@ -636,7 +723,7 @@ int main(void) {
 
     // music
     InitAudioDevice();
-    Music music = LoadMusicStream("resources/Puzzle-Game-2_Looping.mp3");
+    music = LoadMusicStream("resources/Puzzle-Game-2_Looping.mp3");
     music.looping = true;
     SetMusicVolume(music, 0.05);
     PlayMusicStream(music);
@@ -645,6 +732,8 @@ int main(void) {
     restartTexture = LoadTexture("Resources/restart.png");
     exitTexture = LoadTexture("Resources/exit.png");
     mouseTexture = LoadTexture("Resources/mouse.png");
+    musicTexture = LoadTexture("Resources/music.png");
+    undoTexture = LoadTexture("Resources/undo.png");
 
     // font
     defaultFont = LoadFontEx("Resources/Roboto-Medium.ttf", 32, 0, 0);
@@ -663,6 +752,7 @@ int main(void) {
             drawFrame();
             drawRestartButton();
             drawExitButton();
+            drawUndoButton();
 
         } else {
             updateMenu();
@@ -675,6 +765,8 @@ int main(void) {
     UnloadTexture(exitTexture);
     UnloadTexture(restartTexture);
     UnloadTexture(mouseTexture);
+    UnloadTexture(musicTexture);
+    UnloadTexture(undoTexture);
     UnloadMusicStream(music);
     UnloadFont(defaultFont); 
     CloseAudioDevice(); 

@@ -9,7 +9,7 @@
 #define NEWBLUE         (Color){ 6, 164, 235, 255 }
 #define NEWDARKBLUE     (Color){ 14, 157, 217, 255 }
 #define LIGHTLIGHTGRAY  (Color){222, 222, 222, 255}
-#define BACKGROUND      (Color){250, 250, 250, 255}
+#define BACKGROUND      (Color){240, 240, 240, 255}
 #define SHADOWCOLOR     (Color){223, 223, 223, 200}
 #define WHITETEXT       (Color){235, 235, 235, 255}
 
@@ -17,8 +17,8 @@
 // on level load currentlayout is updated and used to pick correct rendering values from here
 // e.g if currentLayout = 1, to render our level we use NUMBEROFROWS[1], cellRadius[1], ...
 
-static const int NUMBEROFROWS[3] = {8,14,18};
-static const int NUMBEROFCOLUMNS[3] = {14,22,28};
+static const int numberOfRows[3] = {8,14,18};
+static const int numberOfColumns[3] = {14,22,28};
 
 static const int playareaOffsetX[3] = {64,30,40};
 static const int playareaOffsetY = 60;
@@ -36,8 +36,8 @@ static const int cellOutlineWidth[3] = {10, 6, 5};
 
 static const int fontSpacing = 1;
 
-static const int shadowOffsetX = -8;
-static const int shadowOffsetY = 5;
+static const int shadowOffsetX[3] = {-8, -6, -4};
+static const int shadowOffsetY[3] = {8, 6, 4};
 
 static const int flaggedGradientRealCycle = 24;
 static const int flaggedGradientFullCycle = flaggedGradientRealCycle * 4;
